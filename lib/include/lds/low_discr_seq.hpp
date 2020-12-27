@@ -237,10 +237,13 @@ class sphere3_hopf {
     auto operator()() -> std::vector<double> {
         auto phi = this->vdc0() * twoPI; // map to [0, 2*pi];
         auto psy = this->vdc1() * twoPI; // map to [0, 2*pi];
-        auto zzz = this->vdc2() * 2 - 1; // map to [-1., 1.];
-        auto eta = std::acos(zzz) / 2;
-        auto cos_eta = std::cos(eta);
-        auto sin_eta = std::sin(eta);
+        // auto zzz = this->vdc2() * 2 - 1; // map to [-1., 1.];
+        // auto eta = std::acos(zzz) / 2;
+        // auto cos_eta = std::cos(eta);
+        // auto sin_eta = std::sin(eta);
+        auto vd = this->vdc2();
+        auto cos_eta = std::sqrt(vd);
+        auto sin_eta = std::sqrt(1 - vd);
         return {
             cos_eta * std::cos(psy),
             cos_eta * std::sin(psy),

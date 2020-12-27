@@ -1,31 +1,46 @@
-#include <lds/low_discr_seq_n.hpp>
 #include <cassert>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xadapt.hpp> // for xtensor
+#include <lds/low_discr_seq_n.hpp>
 
 using Arr = xt::xarray<double, xt::layout_type::row_major>;
 
 namespace lds {
 
+/**
+ * @brief 
+ * 
+ */
 struct Sp3Table
 {
     double pi;
     xt::xtensor<double,1> x;
     xt::xtensor<double,1> t;
 
+    /**
+     * @brief Construct a new Sp 3 Table object
+     * 
+     */
     Sp3Table()
-        : pi {std::acos(-1)}
+        : pi {xt::numeric_constants<double>::PI}
         , x {xt::linspace(0., pi, 300)}
         , t {(x - xt::sin(x) * xt::cos(x)) / 2.}
     {
     }
 };
 
-static const Sp3Table sp3{};
 
+static const auto sp3 = Sp3Table{};
+static const auto halfPI = 0.5 * xt::numeric_constants<double>::PI;
+
+
+/**
+ * @brief 
+ * 
+ * @return std::vector<double> 
+ */
 auto sphere3::operator()() -> std::vector<double> {
-    auto vd = this->vdc();
-    auto ti = this->halfpi * vd; // map to [0, pi/2];
+    auto ti = halfPI * this->vdc(); // map to [0, pi/2];
     auto xi = xt::interp(xt::xtensor<double,1>{ti}, sp3.t, sp3.x);
     auto cosxi = std::cos(xi[0]);
     auto sinxi = std::sin(xi[0]);
@@ -34,6 +49,12 @@ auto sphere3::operator()() -> std::vector<double> {
 }
 
 
+/**
+ * @brief Construct a new cylin n::cylin n object
+ * 
+ * @param n 
+ * @param base 
+ */
 cylin_n::cylin_n(unsigned n, const unsigned* base)
     : vdc(base[0])
 {
@@ -46,21 +67,26 @@ cylin_n::cylin_n(unsigned n, const unsigned* base)
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @return std::vector<double> 
+ */
 auto cylin_n::operator()() -> std::vector<double> {
-    auto vd = this->vdc();
-    auto cosphi = 2 * vd - 1; // map to [-1, 1];
+    auto cosphi = 2 * this->vdc() - 1; // map to [-1, 1];
     auto sinphi = std::sqrt(1 - cosphi * cosphi);
     auto nextVisitor = [](auto& t) { return (*t)(); };
     auto res = std::visit(nextVisitor, this->S);
-    for (auto& xi : res)
-    {
-        xi *= sinphi;
-    }
+    for (auto& xi : res) xi *= sinphi;
     res.push_back(cosphi);
     return res;
 }
 
 
+/**
+ * @brief 
+ * 
+ */
 struct IntSinPowerTable
 {
     using XT = xt::xtensor<double, 1>;
@@ -78,30 +104,44 @@ struct IntSinPowerTable
         , neg_cosine {-xt::cos(x)}
         , sine {xt::sin(x)}
     {
-        this->vec_tp_even.push_back(x);
-        this->vec_tp_odd.push_back(neg_cosine);
+        this->vec_tp_even.push_back(this->x);
+        this->vec_tp_odd.push_back(this->neg_cosine);
     }
 
     /** Evaluate integral sin^n(x) dx; */
     auto get_tp(unsigned n) -> const XT& 
     {
         auto [quot, rem] = std::div(n, 2);
-        return rem == 0 ? this->get_tp_core(quot, this->vec_tp_even) 
-                        : this->get_tp_core(quot, this->vec_tp_odd);
+        return rem == 0 ? this->get_tp_even(quot) 
+                        : this->get_tp_odd(quot);
     }
 
-    auto get_tp_core(unsigned quot, std::vector<XT>& vec_tp) -> const XT& {
-        if (quot < vec_tp.size())
+    auto get_tp_even(unsigned quot) -> const XT& {
+        if (quot < this->vec_tp_even.size())
         {
-            return vec_tp[quot];
+            return this->vec_tp_even[quot];
         }
-        const auto& Snm2 = this->get_tp_core(quot - 1, vec_tp);
+        const auto& Snm2 = this->get_tp_even(quot - 1);
         const auto n = 2*quot;
         auto res = ((n - 1) * Snm2 + 
              this->neg_cosine * xt::pow(this->sine, n - 1)) / n;
-        vec_tp.push_back(res);
-        return vec_tp[quot];
+        this->vec_tp_even.push_back(res);
+        return vec_tp_even[quot];
     }
+
+    auto get_tp_odd(unsigned quot) -> const XT& {
+        if (quot < this->vec_tp_odd.size())
+        {
+            return this->vec_tp_odd[quot];
+        }
+        const auto& Snm2 = this->get_tp_odd(quot - 1);
+        const auto n = 2*quot + 1;
+        auto res = ((n - 1) * Snm2 + 
+             this->neg_cosine * xt::pow(this->sine, n - 1)) / n;
+        this->vec_tp_odd.push_back(res);
+        return vec_tp_odd[quot];
+    }
+
 };
 
 static IntSinPowerTable sp{};
@@ -115,15 +155,14 @@ sphere_n::sphere_n(unsigned n, const unsigned* base)
     if (n == 3) {
         this->S = std::make_unique<sphere>(&base[1]);
     }
-    else {
+    else { 
         this->S = std::make_unique<sphere_n>(n - 1, &base[1]);
     }
 
     const auto m = 300; // number of interpolation points???;
-    // this->x = xt::linspace(0, std::pi, m);
-    // this->t = int_sin_power(n - 1, this->x);
-    this->t0 = sp.get_tp(n)[0];
-    this->range_t = sp.get_tp(n)[m-1] - this->t0;
+    const auto& tp = sp.get_tp(n);
+    this->t0 = tp[0];
+    this->range_t = tp[m-1] - tp[0];
 }
 
 auto sphere_n::operator()() -> std::vector<double> {
