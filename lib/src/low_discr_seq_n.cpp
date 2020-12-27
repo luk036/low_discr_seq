@@ -4,7 +4,35 @@
 #include <xtensor/xadapt.hpp> // for xtensor
 
 using Arr = xt::xarray<double, xt::layout_type::row_major>;
+
 namespace lds {
+
+struct Sp3Table
+{
+    double pi;
+    xt::xtensor<double,1> x;
+    xt::xtensor<double,1> t;
+
+    Sp3Table()
+        : pi {std::acos(-1)}
+        , x {xt::linspace(0., pi, 300)}
+        , t {(x - xt::sin(x) * xt::cos(x)) / 2.}
+    {
+    }
+};
+
+static const Sp3Table sp3{};
+
+auto sphere3::operator()() -> std::vector<double> {
+    auto vd = this->vdc();
+    auto ti = this->halfpi * vd; // map to [0, pi/2];
+    auto xi = xt::interp(xt::xtensor<double,1>{ti}, sp3.t, sp3.x);
+    auto cosxi = std::cos(xi[0]);
+    auto sinxi = std::sin(xi[0]);
+    auto S = this->sphere2();
+    return {cosxi, sinxi*S[0], sinxi*S[1], sinxi*S[2]};
+}
+
 
 cylin_n::cylin_n(unsigned n, const unsigned* base)
     : vdc(base[0])
@@ -18,11 +46,11 @@ cylin_n::cylin_n(unsigned n, const unsigned* base)
     }
 }
 
-auto cylin_n::operator++() -> std::vector<double> {
-    auto vd = ++this->vdc;
+auto cylin_n::operator()() -> std::vector<double> {
+    auto vd = this->vdc();
     auto cosphi = 2 * vd - 1; // map to [-1, 1];
     auto sinphi = std::sqrt(1 - cosphi * cosphi);
-    auto nextVisitor = [](auto& t) { return ++(*t); };
+    auto nextVisitor = [](auto& t) { return (*t)(); };
     auto res = std::visit(nextVisitor, this->S);
     for (auto& xi : res)
     {
@@ -35,67 +63,53 @@ auto cylin_n::operator++() -> std::vector<double> {
 
 struct IntSinPowerTable
 {
-    using XT = xt::tensor<double, 1>;
+    using XT = xt::xtensor<double, 1>;
 
     double pi;
     XT x;
     XT neg_cosine;
     XT sine;
-    std::vector<XT> vec_t_even;
-    std::vector<XT> vec_t_odd; 
+    std::vector<XT> vec_tp_even;
+    std::vector<XT> vec_tp_odd; 
 
     IntSinPowerTable()
         : pi {std::acos(-1)}
         , x {xt::linspace(0., pi, 300)}
         , neg_cosine {-xt::cos(x)}
-        , sine {xt::sine(x)}
+        , sine {xt::sin(x)}
     {
-        this->vec_t_even.push_back(x);
-        this->vec_t_odd.push_back(neg_cosine);
+        this->vec_tp_even.push_back(x);
+        this->vec_tp_odd.push_back(neg_cosine);
     }
 
     /** Evaluate integral sin^n(x) dx; */
-    auto get_t(unsigned n) const -> const XT& 
+    auto get_tp(unsigned n) -> const XT& 
     {
         auto [quot, rem] = std::div(n, 2);
-
-        if (rem == 0) // even
-        {
-            return this->get_t_even(quot);
-        }
-        return this->get_t_odd(quot);
+        return rem == 0 ? this->get_tp_core(quot, this->vec_tp_even) 
+                        : this->get_tp_core(quot, this->vec_tp_odd);
     }
 
-    auto get_t_even(unsigned n) const -> const XT& {
-        if (n < vec_t.size())
+    auto get_tp_core(unsigned quot, std::vector<XT>& vec_tp) -> const XT& {
+        if (quot < vec_tp.size())
         {
-            return vec_t[n];
+            return vec_tp[quot];
         }
-        const auto& Snm2 = get_t(n - 2);
-        return ((n - 1) * Snm2 + neg_cosine * xt::pow(sine, n - 1)) / n;
+        const auto& Snm2 = this->get_tp_core(quot - 1, vec_tp);
+        const auto n = 2*quot;
+        auto res = ((n - 1) * Snm2 + 
+             this->neg_cosine * xt::pow(this->sine, n - 1)) / n;
+        vec_tp.push_back(res);
+        return vec_tp[quot];
     }
-}
-
 };
 
-IntSinPowerTable sp{};
-
-/** Evaluate integral sin^n(x) dx; */
-auto int_sin_power(unsigned n, const Arr& x) -> Arr {
-    if (n == 0) {
-        return x;
-    }
-    if (n == 1) {
-        return -xt::cos(x);
-    }
-    auto Snm2 = int_sin_power(n - 2, x);
-    return ((n - 1) * Snm2 - xt::cos(x) * xt::pow(xt::sin(x), n - 1)) / n;
-}
+static IntSinPowerTable sp{};
 
 
 sphere_n::sphere_n(unsigned n, const unsigned* base)
     : vdc(base[0])
-    , nm3{n - 3}
+    , n{n}
 {
     assert(n >= 3);
     if (n == 3) {
@@ -108,18 +122,18 @@ sphere_n::sphere_n(unsigned n, const unsigned* base)
     const auto m = 300; // number of interpolation points???;
     // this->x = xt::linspace(0, std::pi, m);
     // this->t = int_sin_power(n - 1, this->x);
-    this->t0 = sp.get_t(this->nm3)[0];
-    this->range_t = sp.get_t(this->nm3)[m-1] - this->t0;
+    this->t0 = sp.get_tp(n)[0];
+    this->range_t = sp.get_tp(n)[m-1] - this->t0;
 }
 
-auto sphere_n::operator++() -> std::vector<double> {
-    auto vd = ++this->vdc;
+auto sphere_n::operator()() -> std::vector<double> {
+    auto vd = this->vdc();
     auto ti = this->t0 + this->range_t * vd; // map to [t0, tm-1];
     auto xi = xt::interp(xt::xtensor<double,1>{ti},
-                         sp.get_t(this->nm3), sp.x);
-    auto cosxi = std::cos(xi[0]);
-    auto sinxi = std::sin(xi[0]);
-    auto nextVisitor = [](auto& t) { return ++(*t); };
+                         sp.get_tp(n), sp.x);
+    auto cosphi = std::cos(xi[0]);
+    auto sinphi = std::sin(xi[0]);
+    auto nextVisitor = [](auto& t) { return (*t)(); };
     auto res = std::visit(nextVisitor, this->S);
     for (auto& xi : res)
     {

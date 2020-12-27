@@ -5,6 +5,34 @@
 
 namespace lds {
 
+static constexpr auto twoPI = 2 * std::acos(-1);
+
+
+/**
+ * @brief van der Corput sequence
+ * 
+ * @param k 
+ * @param base 
+ * @return double
+ */
+inline auto vdc(unsigned k, unsigned base=2) -> double 
+{
+    auto vdc = 0.;
+    auto denom = 1.;
+    while (k != 0) {
+        denom *= base;
+        auto remainder = k % base;
+        k /= base;
+        vdc += remainder / denom;
+    }
+    return vdc;
+}
+
+
+/**
+ * @brief van der Corput sequence generator
+ * 
+ */
 class vdcorput {
   private:
     unsigned base;
@@ -25,12 +53,30 @@ class vdcorput {
     /**
      * @brief 
      * 
-     * @return auto 
+     * @return double 
      */
-    auto operator++() -> double;
+    auto operator()() -> double
+    {
+        this->count += 1;
+        return vdc(this->count, this->base);
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param seed 
+     */
+    auto reseed(unsigned seed)
+    {
+        this->count = seed;
+    }
 };
 
 
+/**
+ * @brief Halton sequence generator
+ * 
+ */
 class halton {
   private:
     vdcorput vdc0;
@@ -53,16 +99,30 @@ class halton {
      * 
      * @return auto 
      */
-    auto operator++() {
-        return std::vector{++this->vdc0, ++this->vdc1};
+    auto operator()() -> std::vector<double>
+    {
+        return {this->vdc0(), this->vdc1()};
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param seed 
+     */
+    auto reseed(unsigned seed)
+    {
+	      this->vdc0.reseed(seed);
+	      this->vdc1.reseed(seed);
     }
 };
 
 
-/** Generate Circle Halton sequence */
+/**
+ * @brief Circle sequence generator
+ * 
+ */
 class circle {
   private:
-    static constexpr double twopi = 2 * std::acos(-1);
     vdcorput vdc;
 
   public:
@@ -81,17 +141,29 @@ class circle {
      * 
      * @return auto 
      */
-    auto operator++() {
-        auto vd = ++this->vdc;
-        auto theta = this->twopi * vd; // map to [0, 2*pi];
-        return std::vector{std::cos(theta), std::sin(theta)};
+    auto operator()() -> std::vector<double>
+    {
+        auto theta = this->vdc() * twoPI; // map to [0, 2*pi];
+        return {std::cos(theta), std::sin(theta)};
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param seed 
+     */
+    auto reseed(unsigned seed) -> void
+    {
+        this->vdc.reseed(seed);
     }
 };
 
 
+/**
+ * @brief Sphere sequence generator
+ * 
+ */
 class sphere {
-    /** Generate Sphere Halton sequence 0,..,k;
-    */
   private:
     vdcorput vdc;
     circle cirgen;
@@ -113,24 +185,33 @@ class sphere {
      * 
      * @return auto 
      */
-    auto operator++() {
-        auto vd = ++this->vdc;
-        auto cosphi = 2 * vd - 1; // map to [-1, 1];
+    auto operator()() -> std::vector<double>
+    {
+        auto cosphi = 2 * this->vdc() - 1; // map to [-1, 1];
         auto sinphi = std::sqrt(1 - cosphi * cosphi);
-        auto c = ++this->cirgen;
-        return std::vector{cosphi, sinphi * c[0], sinphi * c[1]};
+        auto cc = this->cirgen();
+        return {cosphi, sinphi * cc[0], sinphi * cc[1]};
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param seed 
+     */
+    auto reseed(unsigned seed) -> void
+    {
+	      this->cirgen.reseed(seed);
+	      this->vdc.reseed(seed);
     }
 };
 
 
 /**
- sphere3_hopf   Halton sequence;
- INPUTS   : k - maximum sequence index, non-negative integer;
-            b - sequence base, integer exceeding 1;
-*/
+ * @brief S(3) sequence generator by Hopf
+ * 
+ */
 class sphere3_hopf {
   private:
-    static constexpr double twopi = 2 * std::acos(-1);
     vdcorput vdc0;
     vdcorput vdc1;
     vdcorput vdc2;
@@ -153,50 +234,39 @@ class sphere3_hopf {
      * 
      * @return auto 
      */
-    auto operator++() {
-        auto vd2 = ++this->vdc2;
-        auto phi = this->twopi * ++this->vdc0; // map to [0, 2*std::pi];
-        auto psy = this->twopi * ++this->vdc1; // map to [0, 2*std::pi];
-        auto z = 2 * vd2 - 1; // map to [-1., 1.];
-        auto eta = std::acos(z) / 2;
+    auto operator()() -> std::vector<double> {
+        auto phi = this->vdc0() * twoPI; // map to [0, 2*pi];
+        auto psy = this->vdc1() * twoPI; // map to [0, 2*pi];
+        auto zzz = this->vdc2() * 2 - 1; // map to [-1., 1.];
+        auto eta = std::acos(zzz) / 2;
         auto cos_eta = std::cos(eta);
         auto sin_eta = std::sin(eta);
-        return std::vector{
+        return {
             cos_eta * std::cos(psy),
             cos_eta * std::sin(psy),
             sin_eta * std::cos(phi + psy),
             sin_eta * std::sin(phi + psy)
         };
     }
-};
-
-
-/** Generate Sphere-3 Halton sequence */
-class sphere3 {
-  private:
-    static constexpr double halfpi = std::acos(-1) / 2;
-    vdcorput vdc;
-    sphere sphere2;
-
-  public:
-    /**
-     * @brief Construct a new sphere3 object
-     * 
-     * @param base 
-     */
-    explicit sphere3(const unsigned* base);
 
     /**
      * @brief 
      * 
-     * @return std::vector<double> 
+     * @param seed 
      */
-    auto operator++() -> std::vector<double>;
+    auto reseed(unsigned seed) -> void
+    {
+	      this->vdc0.reseed(seed);
+	      this->vdc1.reseed(seed);
+	      this->vdc2.reseed(seed);
+    }
 };
 
 
-/** Generate base-b Halton sequence;
-*/
+/**
+ * @brief Halton(n) sequence generator
+ * 
+ */
 class halton_n {
   private:
     std::vector<vdcorput> vec_vdc;
@@ -221,12 +291,26 @@ class halton_n {
      * 
      * @return auto 
      */
-    auto operator++() {
+    auto operator()() -> std::vector<double>
+    {
         auto res = std::vector<double>{};
         for (auto& vdc : this->vec_vdc) {
-            res.emplace_back(++vdc);
+            res.emplace_back(vdc());
         }
         return res;
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param seed 
+     */
+    auto reseed(unsigned seed) -> void
+    {
+	      for (auto& vdc : this->vec_vdc)
+	      {
+	          vdc.reseed(seed);
+	      }
     }
 };
 
