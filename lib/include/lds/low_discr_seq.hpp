@@ -5,7 +5,7 @@
 
 namespace lds {
 
-static constexpr auto twoPI = 2 * std::acos(-1);
+static const auto twoPI = 2 * std::acos(-1.);
 
 
 /**
