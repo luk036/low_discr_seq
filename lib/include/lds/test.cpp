@@ -7,7 +7,6 @@ int main()
     auto hgen = lds::halton_n(3, b);
     for (auto i = 0U; i != 10; ++i)
     {
-	fmt::print("{}\n", hgen());
+        fmt::print("{}\n", hgen());
     }
 }
-

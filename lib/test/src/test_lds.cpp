@@ -5,8 +5,9 @@
 template <typename T>
 void print_test(T&& gen)
 {
-    for (auto i = 0U; i != 10; ++i) {
-	    fmt::print("{}\n", gen());
+    for (auto i = 0U; i != 10; ++i)
+    {
+        fmt::print("{}\n", gen());
     }
 }
 
