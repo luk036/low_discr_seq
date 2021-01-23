@@ -17,6 +17,7 @@ RUN apt-get update \
   fortune \
   toilet \
   tty-clock \
+  librange-v3-dev \
   wget
 
 RUN mkdir -p /workspace/data \
