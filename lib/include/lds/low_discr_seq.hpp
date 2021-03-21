@@ -16,7 +16,7 @@ static const auto twoPI = 2 * std::acos(-1.);
  * @param base
  * @return double
  */
-inline auto vdc(unsigned k, unsigned base = 2) -> double
+inline constexpr auto vdc(unsigned k, unsigned base = 2) noexcept -> double
 {
     auto vdc = 0.;
     auto denom = 1.;
@@ -47,7 +47,7 @@ class vdcorput
      *
      * @param base
      */
-    explicit vdcorput(unsigned base = 2)
+    explicit constexpr vdcorput(unsigned base = 2) noexcept
         : _base {base}
         , _count {0}
     {
@@ -58,7 +58,7 @@ class vdcorput
      *
      * @return double
      */
-    auto operator()() -> double
+    constexpr auto operator()() noexcept -> double
     {
         this->_count += 1;
         return vdc(this->_count, this->_base);
@@ -69,7 +69,7 @@ class vdcorput
      *
      * @param seed
      */
-    auto reseed(unsigned seed)
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_count = seed;
     }
@@ -92,7 +92,7 @@ class halton
      *
      * @param base
      */
-    explicit halton(const unsigned* base)
+    explicit constexpr halton(const unsigned* base) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
     {
@@ -113,7 +113,7 @@ class halton
      *
      * @param seed
      */
-    auto reseed(unsigned seed)
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_vdc0.reseed(seed);
         this->_vdc1.reseed(seed);
@@ -136,7 +136,7 @@ class circle
      *
      * @param base
      */
-    explicit circle(unsigned base = 2)
+    constexpr explicit circle(unsigned base = 2) noexcept
         : _vdc(base)
     {
     }
@@ -148,7 +148,7 @@ class circle
      */
     auto operator()() -> std::vector<double>
     {
-        auto theta = this->_vdc() * twoPI; // map to [0, 2*pi];
+        const auto theta = this->_vdc() * twoPI; // map to [0, 2*pi];
         return {std::sin(theta), std::cos(theta)};
     }
 
@@ -157,7 +157,7 @@ class circle
      *
      * @param seed
      */
-    auto reseed(unsigned seed) -> void
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_vdc.reseed(seed);
     }
@@ -180,7 +180,7 @@ class sphere
      *
      * @param base
      */
-    sphere(const unsigned* base)
+    explicit constexpr sphere(const unsigned* base) noexcept
         : _vdc(base[0])
         , _cirgen(base[1])
     {
@@ -193,8 +193,8 @@ class sphere
      */
     auto operator()() -> std::vector<double>
     {
-        auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
-        auto sinphi = std::sqrt(1 - cosphi * cosphi);
+        const auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
+        const auto sinphi = std::sqrt(1 - cosphi * cosphi);
         auto cc = this->_cirgen();
         return {sinphi * cc[0], sinphi * cc[1], cosphi};
     }
@@ -204,7 +204,7 @@ class sphere
      *
      * @param seed
      */
-    auto reseed(unsigned seed) -> void
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_cirgen.reseed(seed);
         this->_vdc.reseed(seed);
@@ -229,7 +229,7 @@ class sphere3_hopf
      *
      * @param base
      */
-    explicit sphere3_hopf(const unsigned* base)
+    constexpr explicit sphere3_hopf(const unsigned* base) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
         , _vdc2(base[2])
@@ -243,15 +243,15 @@ class sphere3_hopf
      */
     auto operator()() -> std::vector<double>
     {
-        auto phi = this->_vdc0() * twoPI; // map to [0, 2*pi];
-        auto psy = this->_vdc1() * twoPI; // map to [0, 2*pi];
+        const auto phi = this->_vdc0() * twoPI; // map to [0, 2*pi];
+        const auto psy = this->_vdc1() * twoPI; // map to [0, 2*pi];
         // auto zzz = this->_vdc2() * 2 - 1; // map to [-1., 1.];
         // auto eta = std::acos(zzz) / 2;
         // auto cos_eta = std::cos(eta);
         // auto sin_eta = std::sin(eta);
         auto vd = this->_vdc2();
-        auto cos_eta = std::sqrt(vd);
-        auto sin_eta = std::sqrt(1 - vd);
+        const auto cos_eta = std::sqrt(vd);
+        const auto sin_eta = std::sqrt(1 - vd);
         return {cos_eta * std::cos(psy), cos_eta * std::sin(psy),
             sin_eta * std::cos(phi + psy), sin_eta * std::sin(phi + psy)};
     }
@@ -261,7 +261,7 @@ class sphere3_hopf
      *
      * @param seed
      */
-    auto reseed(unsigned seed) -> void
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_vdc0.reseed(seed);
         this->_vdc1.reseed(seed);

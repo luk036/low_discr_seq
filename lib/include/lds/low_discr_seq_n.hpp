@@ -20,7 +20,7 @@ class sphere3
      *
      * @param base
      */
-    explicit sphere3(const unsigned* base)
+    constexpr explicit sphere3(const unsigned* base) noexcept
         : _vdc(base[0])
         , _sphere2(&base[1])
     {
@@ -33,7 +33,7 @@ class sphere3
      */
     auto operator()() -> std::vector<double>;
 
-    auto reseed(unsigned seed) -> void
+    constexpr auto reseed(unsigned seed) noexcept -> void
     {
         this->_vdc.reseed(seed);
         this->_sphere2.reseed(seed);

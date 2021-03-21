@@ -14,20 +14,20 @@ namespace lds
  */
 struct Sp3Table
 {
-    double _pi;
-    xt::xtensor<double, 1> x;
-    xt::xtensor<double, 1> t;
+    double _pi {xt::numeric_constants<double>::PI};
+    xt::xtensor<double, 1> x {xt::linspace(0., _pi, 300)};
+    xt::xtensor<double, 1> t {0.5 * (x - xt::sin(x) * xt::cos(x))};
 
     /**
      * @brief Construct a new Sp 3 Table object
      *
      */
-    Sp3Table()
-        : _pi {xt::numeric_constants<double>::PI}
-        , x {xt::linspace(0., _pi, 300)}
-        , t {(x - xt::sin(x) * xt::cos(x)) / 2.}
-    {
-    }
+    // Sp3Table()
+    //     : _pi 
+    //     , x 
+    //     , t 
+    // {
+    // }
 };
 
 
@@ -42,11 +42,11 @@ static const auto halfPI = 0.5 * xt::numeric_constants<double>::PI;
  */
 auto sphere3::operator()() -> std::vector<double>
 {
-    auto ti = halfPI * this->_vdc(); // map to [0, pi/2];
-    auto xi = xt::interp(xt::xtensor<double, 1> {ti}, sp3.t, sp3.x);
-    auto cosxi = std::cos(xi[0]);
-    auto sinxi = std::sin(xi[0]);
-    auto S = this->_sphere2();
+    const auto ti = halfPI * this->_vdc(); // map to [0, pi/2];
+    const auto xi = xt::interp(xt::xtensor<double, 1> {ti}, sp3.t, sp3.x);
+    const auto cosxi = std::cos(xi[0]);
+    const auto sinxi = std::sin(xi[0]);
+    const auto S = this->_sphere2();
     return {sinxi * S[0], sinxi * S[1], sinxi * S[2], cosxi};
 }
 
@@ -78,13 +78,14 @@ cylin_n::cylin_n(unsigned n, const unsigned* base)
  */
 auto cylin_n::operator()() -> std::vector<double>
 {
-    auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
-    auto sinphi = std::sqrt(1 - cosphi * cosphi);
-    auto nextVisitor = [](auto& t) { return (*t)(); };
-    auto res = std::visit(nextVisitor, this->_S);
+    const auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
+    const auto sinphi = std::sqrt(1 - cosphi * cosphi);
+    auto res = std::visit([](auto& t) { return (*t)(); }, this->_S);
     for (auto& xi : res)
+    {
         xi *= sinphi;
-    res.push_back(cosphi);
+    }
+    res.emplace_back(std::move(cosphi));
     return res;
 }
 
@@ -97,18 +98,14 @@ struct IntSinPowerTable
 {
     using XT = xt::xtensor<double, 1>;
 
-    double _pi;
-    XT x;
-    XT _neg_cosine;
-    XT _sine;
+    const double _pi {xt::numeric_constants<double>::PI};
+    const XT x {xt::linspace(0., _pi, 300)};
+    const XT _neg_cosine {-xt::cos(x)};
+    const XT _sine {xt::sin(x)};
     std::vector<XT> _vec_tp_even;
     std::vector<XT> _vec_tp_odd;
 
     IntSinPowerTable()
-        : _pi {xt::numeric_constants<double>::PI}
-        , x {xt::linspace(0., _pi, 300)}
-        , _neg_cosine {-xt::cos(x)}
-        , _sine {xt::sin(x)}
     {
         this->_vec_tp_even.push_back(this->x);
         this->_vec_tp_odd.push_back(this->_neg_cosine);
@@ -132,7 +129,7 @@ struct IntSinPowerTable
         auto res =
             ((n - 1) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1)) /
             n;
-        this->_vec_tp_even.push_back(res);
+        this->_vec_tp_even.emplace_back(std::move(res));
         return this->_vec_tp_even[quot];
     }
 
@@ -147,7 +144,7 @@ struct IntSinPowerTable
         auto res =
             ((n - 1) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1)) /
             n;
-        this->_vec_tp_odd.push_back(res);
+        this->_vec_tp_odd.emplace_back(std::move(res));
         return this->_vec_tp_odd[quot];
     }
 };
@@ -177,19 +174,17 @@ sphere_n::sphere_n(unsigned n, const unsigned* base)
 
 auto sphere_n::operator()() -> std::vector<double>
 {
-    auto vd = this->_vdc();
-    auto ti = this->_t0 + this->_range_t * vd; // map to [t0, tm-1];
-    auto xi =
+    const auto vd = this->_vdc();
+    const auto ti = this->_t0 + this->_range_t * vd; // map to [t0, tm-1];
+    const auto xi =
         xt::interp(xt::xtensor<double, 1> {ti}, sp.get_tp(this->_n), sp.x);
-    auto cosphi = std::cos(xi[0]);
-    auto sinphi = std::sin(xi[0]);
-    auto nextVisitor = [](auto& t) { return (*t)(); };
-    auto res = std::visit(nextVisitor, this->_S);
-    for (auto& xi : res)
+    const auto sinphi = std::sin(xi[0]);
+    auto res = std::visit([](auto& t) { return (*t)(); }, this->_S);
+    for (auto& _xi : res)
     {
-        xi *= sinphi;
+        _xi *= sinphi;
     }
-    res.push_back(cosphi);
+    res.emplace_back(std::cos(xi[0]));
     return res;
 }
 
