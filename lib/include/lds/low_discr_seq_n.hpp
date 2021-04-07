@@ -20,7 +20,7 @@ class sphere3
      *
      * @param base
      */
-    constexpr explicit sphere3(const unsigned* base) noexcept
+    constexpr explicit sphere3(const unsigned base[]) noexcept
         : _vdc(base[0])
         , _sphere2(&base[1])
     {
@@ -55,7 +55,7 @@ class cylin_n
      * @param n dimension
      * @param base sequence base
      */
-    cylin_n(unsigned n, const unsigned* base);
+    cylin_n(unsigned n, const unsigned base[]);
 
     /**
      * @brief
@@ -83,7 +83,7 @@ class sphere_n
      * @param n dimension
      * @param base sequence base
      */
-    sphere_n(unsigned n, const unsigned* base);
+    sphere_n(unsigned n, const unsigned base[]);
 
     /**
      * @brief

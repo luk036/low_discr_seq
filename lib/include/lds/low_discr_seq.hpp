@@ -39,7 +39,7 @@ class vdcorput
 {
   private:
     unsigned _base;
-    unsigned _count;
+    unsigned _count {0};
 
   public:
     /**
@@ -49,7 +49,6 @@ class vdcorput
      */
     explicit constexpr vdcorput(unsigned base = 2) noexcept
         : _base {base}
-        , _count {0}
     {
     }
 
@@ -92,7 +91,7 @@ class halton
      *
      * @param base
      */
-    explicit constexpr halton(const unsigned* base) noexcept
+    explicit constexpr halton(const unsigned base[]) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
     {
@@ -180,7 +179,7 @@ class sphere
      *
      * @param base
      */
-    explicit constexpr sphere(const unsigned* base) noexcept
+    explicit constexpr sphere(const unsigned base[]) noexcept
         : _vdc(base[0])
         , _cirgen(base[1])
     {
@@ -229,7 +228,7 @@ class sphere3_hopf
      *
      * @param base
      */
-    constexpr explicit sphere3_hopf(const unsigned* base) noexcept
+    constexpr explicit sphere3_hopf(const unsigned base[]) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
         , _vdc2(base[2])
@@ -286,7 +285,7 @@ class halton_n
      * @param n
      * @param base
      */
-    halton_n(unsigned n, const unsigned* base)
+    halton_n(unsigned n, const unsigned base[])
     {
         for (auto i = 0U; i != n; ++i)
         {

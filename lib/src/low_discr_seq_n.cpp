@@ -23,15 +23,20 @@ struct Sp3Table
      *
      */
     // Sp3Table()
-    //     : _pi 
-    //     , x 
-    //     , t 
+    //     : _pi
+    //     , x
+    //     , t
     // {
     // }
 };
 
 
-static const auto sp3 = Sp3Table {};
+auto getSp3() -> const Sp3Table&
+{
+    static auto sp3 = Sp3Table {};
+    return sp3;
+}
+
 static const auto halfPI = 0.5 * xt::numeric_constants<double>::PI;
 
 
@@ -43,7 +48,8 @@ static const auto halfPI = 0.5 * xt::numeric_constants<double>::PI;
 auto sphere3::operator()() -> std::vector<double>
 {
     const auto ti = halfPI * this->_vdc(); // map to [0, pi/2];
-    const auto xi = xt::interp(xt::xtensor<double, 1> {ti}, sp3.t, sp3.x);
+    const auto xi =
+        xt::interp(xt::xtensor<double, 1> {ti}, getSp3().t, getSp3().x);
     const auto cosxi = std::cos(xi[0]);
     const auto sinxi = std::sin(xi[0]);
     const auto S = this->_sphere2();
@@ -57,7 +63,7 @@ auto sphere3::operator()() -> std::vector<double>
  * @param n
  * @param base
  */
-cylin_n::cylin_n(unsigned n, const unsigned* base)
+cylin_n::cylin_n(unsigned n, const unsigned base[])
     : _vdc(base[0])
 {
     assert(n >= 2);
@@ -149,10 +155,16 @@ struct IntSinPowerTable
     }
 };
 
-static IntSinPowerTable sp {};
+auto getSp() -> IntSinPowerTable&
+{
+    static auto sp = IntSinPowerTable {};
+    return sp;
+}
+
+// static IntSinPowerTable sp {};
 
 
-sphere_n::sphere_n(unsigned n, const unsigned* base)
+sphere_n::sphere_n(unsigned n, const unsigned base[])
     : _vdc(base[0])
     , _n {n}
 {
@@ -167,7 +179,7 @@ sphere_n::sphere_n(unsigned n, const unsigned* base)
     }
 
     const auto m = 300; // number of interpolation points???;
-    const auto& tp = sp.get_tp(n);
+    const auto& tp = getSp().get_tp(n);
     this->_t0 = tp[0];
     this->_range_t = tp[m - 1] - tp[0];
 }
@@ -176,8 +188,8 @@ auto sphere_n::operator()() -> std::vector<double>
 {
     const auto vd = this->_vdc();
     const auto ti = this->_t0 + this->_range_t * vd; // map to [t0, tm-1];
-    const auto xi =
-        xt::interp(xt::xtensor<double, 1> {ti}, sp.get_tp(this->_n), sp.x);
+    const auto xi = xt::interp(
+        xt::xtensor<double, 1> {ti}, getSp().get_tp(this->_n), getSp().x);
     const auto sinphi = std::sin(xi[0]);
     auto res = std::visit([](auto& t) { return (*t)(); }, this->_S);
     for (auto& _xi : res)
