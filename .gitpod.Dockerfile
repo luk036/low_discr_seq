@@ -12,6 +12,7 @@ RUN apt-get update \
   gcc-10 \
   g++-10 \
   clang-13 \
+  cmake-curses-gui \
   clang-format \
   cppcheck \
   kcachegrind-converters \
@@ -64,7 +65,6 @@ RUN /opt/conda/bin/conda config --set always_yes yes --set changeps1 no \
     && /opt/conda/bin/conda info -a
 
 RUN /opt/conda/bin/conda install -y -c conda-forge \
-    ccmake \
     pandoc-crossref \
     pandoc \
 #    openblas \
