@@ -8,6 +8,10 @@ RUN apt-get update \
   apt-utils \
   aria2 \
 # c++ stuff \
+  ccache \
+  gcc-10 \
+  g++-10 \
+  clang-13 \
   clang-format \
   cppcheck \
   kcachegrind-converters \
@@ -60,6 +64,7 @@ RUN /opt/conda/bin/conda config --set always_yes yes --set changeps1 no \
     && /opt/conda/bin/conda info -a
 
 RUN /opt/conda/bin/conda install -y -c conda-forge \
+    ccmake \
     pandoc-crossref \
     pandoc \
 #    openblas \
