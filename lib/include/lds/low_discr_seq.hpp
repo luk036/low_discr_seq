@@ -38,9 +38,9 @@ inline constexpr auto vdc(unsigned k, unsigned base = 2) noexcept -> double
 class vdcorput
 {
   private:
-    unsigned _base;
     unsigned _count {0};
-
+    unsigned _base;
+ 
   public:
     /**
      * @brief Construct a new vdcorput object

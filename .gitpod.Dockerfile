@@ -14,6 +14,7 @@ RUN apt-get update \
   clang-13 \
   cmake-curses-gui \
   clang-format \
+  clang-tidy \
   cppcheck \
   kcachegrind-converters \
   kcachegrind \

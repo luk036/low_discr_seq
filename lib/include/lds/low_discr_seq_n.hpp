@@ -46,7 +46,7 @@ class cylin_n
 {
   private:
     vdcorput _vdc;
-    std::variant<std::unique_ptr<cylin_n>, std::unique_ptr<circle>> _S;
+    std::variant<std::unique_ptr<cylin_n>, std::unique_ptr<circle>> _Cgen;
 
   public:
     /**
@@ -72,7 +72,7 @@ class sphere_n
   private:
     vdcorput _vdc;
     unsigned _n;
-    std::variant<std::unique_ptr<sphere_n>, std::unique_ptr<sphere>> _S;
+    std::variant<std::unique_ptr<sphere_n>, std::unique_ptr<sphere>> _Sgen;
     double _range_t;
     double _t0;
 

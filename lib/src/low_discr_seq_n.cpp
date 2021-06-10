@@ -69,11 +69,11 @@ cylin_n::cylin_n(unsigned n, const unsigned base[])
     assert(n >= 2);
     if (n == 2)
     {
-        this->_S = std::make_unique<circle>(base[1]);
+        this->_Cgen = std::make_unique<circle>(base[1]);
     }
     else
     {
-        this->_S = std::make_unique<cylin_n>(n - 1, &base[1]);
+        this->_Cgen = std::make_unique<cylin_n>(n - 1, &base[1]);
     }
 }
 
@@ -84,9 +84,9 @@ cylin_n::cylin_n(unsigned n, const unsigned base[])
  */
 auto cylin_n::operator()() -> std::vector<double>
 {
-    const auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
+    auto cosphi = 2 * this->_vdc() - 1; // map to [-1, 1];
     const auto sinphi = std::sqrt(1 - cosphi * cosphi);
-    auto res = std::visit([](auto& t) { return (*t)(); }, this->_S);
+    auto res = std::visit([](auto& t) { return (*t)(); }, this->_Cgen);
     for (auto& xi : res)
     {
         xi *= sinphi;
@@ -100,17 +100,22 @@ auto cylin_n::operator()() -> std::vector<double>
  * @brief
  *
  */
-struct IntSinPowerTable
+class IntSinPowerTable
 {
+private:
     using XT = xt::xtensor<double, 1>;
-
     const double _pi {xt::numeric_constants<double>::PI};
+
+public:
     const XT x {xt::linspace(0., _pi, 300)};
+
+private:
     const XT _neg_cosine {-xt::cos(x)};
     const XT _sine {xt::sin(x)};
     std::vector<XT> _vec_tp_even;
     std::vector<XT> _vec_tp_odd;
 
+public:
     IntSinPowerTable()
     {
         this->_vec_tp_even.push_back(this->x);
@@ -171,11 +176,11 @@ sphere_n::sphere_n(unsigned n, const unsigned base[])
     assert(n >= 3);
     if (n == 3)
     {
-        this->_S = std::make_unique<sphere>(&base[1]);
+        this->_Sgen = std::make_unique<sphere>(&base[1]);
     }
     else
     {
-        this->_S = std::make_unique<sphere_n>(n - 1, &base[1]);
+        this->_Sgen = std::make_unique<sphere_n>(n - 1, &base[1]);
     }
 
     const auto m = 300; // number of interpolation points???;
@@ -191,7 +196,7 @@ auto sphere_n::operator()() -> std::vector<double>
     const auto xi = xt::interp(
         xt::xtensor<double, 1> {ti}, getSp().get_tp(this->_n), getSp().x);
     const auto sinphi = std::sin(xi[0]);
-    auto res = std::visit([](auto& t) { return (*t)(); }, this->_S);
+    auto res = std::visit([](auto& t) { return (*t)(); }, this->_Sgen);
     for (auto& _xi : res)
     {
         _xi *= sinphi;
