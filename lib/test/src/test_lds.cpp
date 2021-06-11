@@ -5,13 +5,13 @@
 template <typename T>
 void print_test(T&& gen)
 {
-    for (auto i = 0U; i != 10; ++i)
+    for (auto i = 0; i != 10; ++i)
     {
         fmt::print("{}\n", gen());
     }
 }
 
-int main()
+auto main() -> int
 {
     const unsigned b[] = {2, 3, 5, 7, 11};
 

@@ -10,7 +10,7 @@ void print_test(T&& gen)
     }
 }
 
-int main()
+auto main() -> int
 {
     const unsigned b[] = {2, 3, 5, 7, 11};
 
