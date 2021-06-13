@@ -5,7 +5,7 @@ int main()
 {
     unsigned b[] = {2, 5, 7, 3};
     auto hgen = lds::halton_n(3, b);
-    for (auto i = 0U; i != 10; ++i)
+    for (auto i = 0; i != 10; ++i)
     {
         fmt::print("{}\n", hgen());
     }
