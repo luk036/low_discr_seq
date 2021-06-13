@@ -174,7 +174,7 @@ auto getSp() -> IntSinPowerTable&
 
 sphere_n::sphere_n(gsl::span<const unsigned> base)
     : _vdc(base[0])
-    , _n (base.size())
+    , _n (int(base.size()))
 {
     auto n = this->_n;
     assert(n >= 3);
