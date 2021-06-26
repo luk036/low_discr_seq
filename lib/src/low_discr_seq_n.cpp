@@ -126,7 +126,7 @@ public:
     }
 
     /** Evaluate integral sin^n(x) dx; */
-    auto get_tp(unsigned n) -> const XT&
+    auto get_tp(unsigned long n) -> const XT&
     {
         auto quot = n / 2;
         auto rem = n % 2;
@@ -134,31 +134,31 @@ public:
         return rem == 0 ? this->_get_tp_even(quot) : this->_get_tp_odd(quot);
     }
 
-    auto _get_tp_even(unsigned quot) -> const XT&
+    auto _get_tp_even(unsigned long quot) -> const XT&
     {
         if (quot < this->_vec_tp_even.size())
         {
             return this->_vec_tp_even[quot];
         }
         const auto& Snm2 = this->_get_tp_even(quot - 1);
-        const auto n = 2 * quot;
+        const auto n = 2. * double(quot);
         auto res =
-            ((n - 1) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1)) /
+            ((n - 1.) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1.)) /
             n;
-        this->_vec_tp_even.emplace_back(std::move(res));
+        this->_vec_tp_even.push_back(std::move(res));
         return this->_vec_tp_even[quot];
     }
 
-    auto _get_tp_odd(unsigned quot) -> const XT&
+    auto _get_tp_odd(unsigned long quot) -> const XT&
     {
         if (quot < this->_vec_tp_odd.size())
         {
             return this->_vec_tp_odd[quot];
         }
         const auto& Snm2 = this->_get_tp_odd(quot - 1);
-        const auto n = 2 * quot + 1;
+        const auto n = 2. * double(quot) + 1.;
         auto res =
-            ((n - 1) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1)) /
+            ((n - 1.) * Snm2 + this->_neg_cosine * xt::pow(this->_sine, n - 1.)) /
             n;
         this->_vec_tp_odd.emplace_back(std::move(res));
         return this->_vec_tp_odd[quot];
@@ -176,7 +176,7 @@ auto getSp() -> IntSinPowerTable&
 
 sphere_n::sphere_n(gsl::span<const unsigned> base)
     : _vdc(base[0])
-    , _n (int(base.size()))
+    , _n (base.size())
 {
     auto n = this->_n;
     assert(n >= 3);
