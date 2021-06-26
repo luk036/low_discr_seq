@@ -63,9 +63,10 @@ auto sphere3::operator()() -> std::vector<double>
  * @param n
  * @param base
  */
-cylin_n::cylin_n(unsigned n, const unsigned base[])
+cylin_n::cylin_n(gsl::span<const unsigned> base)
     : _vdc(base[0])
 {
+    auto n = base.size();
     assert(n >= 2);
     if (n == 2)
     {
@@ -73,7 +74,9 @@ cylin_n::cylin_n(unsigned n, const unsigned base[])
     }
     else
     {
-        this->_Cgen = std::make_unique<cylin_n>(n - 1, &base[1]);
+        this->_Cgen = std::make_unique<cylin_n>(
+            base.last(n - 1)
+        );
     }
 }
 
@@ -171,18 +174,21 @@ auto getSp() -> IntSinPowerTable&
 // static IntSinPowerTable sp {};
 
 
-sphere_n::sphere_n(unsigned n, const unsigned base[])
+sphere_n::sphere_n(gsl::span<const unsigned> base)
     : _vdc(base[0])
-    , _n {n}
+    , _n (int(base.size()))
 {
+    auto n = this->_n;
     assert(n >= 3);
     if (n == 3)
     {
-        this->_Sgen = std::make_unique<sphere>(&base[1]);
+        this->_Sgen = std::make_unique<sphere>(
+            base.subspan(1, 2));
     }
     else
     {
-        this->_Sgen = std::make_unique<sphere_n>(n - 1, &base[1]);
+        this->_Sgen = std::make_unique<sphere_n>(
+            base.last(n - 1));
     }
 
     const auto m = 300; // number of interpolation points???;

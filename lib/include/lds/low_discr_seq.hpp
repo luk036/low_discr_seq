@@ -2,6 +2,7 @@
 
 #include <cmath> // import sin, cos, acos, sqrt
 #include <vector>
+#include <gsl/span>
 
 namespace lds
 {
@@ -91,7 +92,7 @@ class halton
      *
      * @param base
      */
-    explicit constexpr halton(const unsigned base[]) noexcept
+    explicit constexpr halton(gsl::span<const unsigned> base) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
     {
@@ -179,7 +180,7 @@ class sphere
      *
      * @param base
      */
-    explicit constexpr sphere(const unsigned base[]) noexcept
+    constexpr sphere(gsl::span<const unsigned> base) noexcept
         : _vdc(base[0])
         , _cirgen(base[1])
     {
@@ -228,7 +229,7 @@ class sphere3_hopf
      *
      * @param base
      */
-    constexpr explicit sphere3_hopf(const unsigned base[]) noexcept
+    constexpr explicit sphere3_hopf(gsl::span<const unsigned> base) noexcept
         : _vdc0(base[0])
         , _vdc1(base[1])
         , _vdc2(base[2])
@@ -285,11 +286,11 @@ class halton_n
      * @param n
      * @param base
      */
-    halton_n(unsigned n, const unsigned base[])
+    halton_n(gsl::span<const unsigned> base)
     {
-        for (auto i = 0U; i != n; ++i)
+        for (auto&& b : base)
         {
-            this->_vec_vdc.emplace_back(vdcorput(base[i]));
+            this->_vec_vdc.emplace_back(vdcorput(b));
         }
     }
 

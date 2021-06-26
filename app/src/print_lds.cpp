@@ -5,7 +5,7 @@
 template <typename T>
 void print_test(T&& gen)
 {
-    for (auto i = 0U; i != 10; ++i) {
+    for (auto i = 0; i != 10; ++i) {
 	    fmt::print("{}\n", gen());
     }
 }
@@ -20,8 +20,8 @@ auto main() -> int
     print_test(lds::sphere(b));
     print_test(lds::sphere3_hopf(b));
     print_test(lds::sphere3(b));
-    print_test(lds::halton_n(3, b));
-    print_test(lds::cylin_n(3, b));
-    print_test(lds::sphere_n(3, b));
-    print_test(lds::sphere_n(4, b));
+    print_test(lds::halton_n({b, 3}));
+    print_test(lds::cylin_n({b, 3}));
+    print_test(lds::sphere_n({b, 3}));
+    print_test(lds::sphere_n({b, 4}));
 }
