@@ -125,7 +125,9 @@ public:
     /** Evaluate integral sin^n(x) dx; */
     auto get_tp(unsigned n) -> const XT&
     {
-        auto [quot, rem] = std::div(n, 2);
+        auto quot = n / 2;
+        auto rem = n % 2;
+        // auto [quot, rem] = std::div(int(n), 2);
         return rem == 0 ? this->_get_tp_even(quot) : this->_get_tp_odd(quot);
     }
 

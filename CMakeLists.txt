@@ -64,7 +64,7 @@ if(MSVC)
 	add_compile_options(/std:c++latest /Wv:18 /W3 /WX /wd4819 /wd4146 /D_SILENCE_CXX17_OLD_ALLOCATOR_MEMBERS_DEPRECATION_WARNING)
 else()
     # add_compile_options(-fno-exceptions -DXTENSOR_DISABLE_EXCEPTIONS -DBOOST_NO_EXCEPTION -Wall -Wnon-virtual-dtor -Wunused -pedantic)
-    add_compile_options(-Wall -Wnon-virtual-dtor -Wunused -pedantic)
+    add_compile_options(-Wall -Wnon-virtual-dtor -Wunused -Wconversion -pedantic)
 endif()
 
 # set(LIBS ${LIBS} "-L$ENV{CONDA_PREFIX}/lib")
