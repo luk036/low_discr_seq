@@ -1,0 +1,12 @@
+name: ellcpp
+channels:
+  - conda-forge
+dependencies:
+  # - cmake
+  - nlohmann_json
+  - fmt
+  - spdlog
+  - doctest
+  - benchmark
+  - openblas
+  - xtensor
