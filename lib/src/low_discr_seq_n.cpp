@@ -126,7 +126,7 @@ public:
     }
 
     /** Evaluate integral sin^n(x) dx; */
-    auto get_tp(unsigned long n) -> const XT&
+    auto get_tp(size_t n) -> const XT&
     {
         auto quot = n / 2;
         auto rem = n % 2;
@@ -134,7 +134,7 @@ public:
         return rem == 0 ? this->_get_tp_even(quot) : this->_get_tp_odd(quot);
     }
 
-    auto _get_tp_even(unsigned long quot) -> const XT&
+    auto _get_tp_even(size_t quot) -> const XT&
     {
         if (quot < this->_vec_tp_even.size())
         {
@@ -149,7 +149,7 @@ public:
         return this->_vec_tp_even[quot];
     }
 
-    auto _get_tp_odd(unsigned long quot) -> const XT&
+    auto _get_tp_odd(size_t quot) -> const XT&
     {
         if (quot < this->_vec_tp_odd.size())
         {
